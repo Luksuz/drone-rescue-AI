@@ -36,9 +36,6 @@
     .glow-primary {
         box-shadow: 0 0 15px rgba(19, 236, 109, 0.3);
     }
-    .coord-font {
-        font-family: 'Courier New', Courier, monospace;
-    }
     @keyframes scan-sweep {
         0% { top: 0; opacity: 0; }
         10% { opacity: 0.6; }
@@ -47,6 +44,12 @@
     }
     .scan-sweep-line {
         animation: scan-sweep 2s ease-in-out infinite;
+    }
+    .toggle-track {
+        transition: background-color 0.2s;
+    }
+    .toggle-thumb {
+        transition: transform 0.2s;
     }
 </style>
 </head>
@@ -99,41 +102,11 @@
 
         <!-- Navigation -->
         <nav class="space-y-1">
-            <a class="flex items-center gap-3 px-3 py-2 text-primary bg-primary/10 rounded-lg group" href="#">
+            <a class="flex items-center gap-3 px-3 py-2 text-primary bg-primary/10 rounded-lg" href="#">
                 <span class="material-symbols-outlined text-xl">dashboard</span>
                 <span class="text-sm font-medium">Mission Command</span>
             </a>
-            <a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
-                <span class="material-symbols-outlined text-xl">history</span>
-                <span class="text-sm font-medium">Session History</span>
-            </a>
-            <a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
-                <span class="material-symbols-outlined text-xl">settings</span>
-                <span class="text-sm font-medium">System Config</span>
-            </a>
         </nav>
-
-        <!-- Telemetry -->
-        <section>
-            <h3 class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 px-2">Live Telemetry</h3>
-            <div class="grid grid-cols-2 gap-2">
-                <div class="bg-white/5 p-2 rounded border border-white/5">
-                    <p class="text-[10px] text-slate-500 uppercase">Signal</p>
-                    <p class="text-sm font-mono text-white">98%</p>
-                </div>
-                <div class="bg-white/5 p-2 rounded border border-white/5">
-                    <p class="text-[10px] text-slate-500 uppercase">Battery</p>
-                    <p class="text-sm font-mono text-white">42m</p>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <div class="p-4 border-t border-white/5">
-        <button class="w-full py-2 bg-slate-800 text-white rounded text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-sm">support_agent</span>
-            Request Support
-        </button>
     </div>
 </aside>
 
@@ -202,7 +175,7 @@
                 <p class="text-4xl font-bold text-white font-mono tracking-tighter" id="stat-classes">00</p>
                 <p class="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
                     <span class="material-symbols-outlined text-[10px]">explore</span>
-                    <span id="stat-classes-list">—</span>
+                    <span id="stat-classes-list">&mdash;</span>
                 </p>
             </div>
             <div class="bg-white/5 border border-white/5 rounded-xl p-5 relative overflow-hidden group">
@@ -221,8 +194,15 @@
         <!-- Detection Viewer Section (hidden until results) -->
         <div class="max-w-6xl mx-auto" id="viewer-section" style="display: none;">
             <div class="bg-black/40 border border-white/5 rounded-xl overflow-hidden shadow-2xl relative">
+                <!-- Badges + BBox Toggle -->
                 <div class="absolute top-4 left-4 z-20 flex gap-2" id="viewer-badges">
                     <span class="bg-primary/90 text-[#0b1610] text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-tighter">SCAN_COMPLETE</span>
+                </div>
+                <div class="absolute top-4 right-4 z-20 flex items-center gap-2">
+                    <span class="text-[10px] text-white/70 uppercase tracking-wider font-bold">BBoxes</span>
+                    <button id="bbox-toggle" class="relative w-10 h-5 rounded-full toggle-track bg-primary/80 flex items-center px-0.5 cursor-pointer" aria-label="Toggle bounding boxes">
+                        <div id="bbox-thumb" class="w-4 h-4 bg-white rounded-full shadow toggle-thumb transform translate-x-5"></div>
+                    </button>
                 </div>
                 <div class="relative aspect-video w-full bg-slate-900 group" id="viewer-container">
                     <div class="scanline absolute inset-0"></div>
@@ -265,8 +245,6 @@
                     <h3 class="text-sm font-bold uppercase tracking-widest text-white">Detection Logs</h3>
                     <div class="flex items-center gap-4">
                         <span class="text-[10px] text-slate-500 font-medium" id="log-count">SHOWING 0 OF 0 TARGETS</span>
-                        <div class="h-4 w-[1px] bg-white/10"></div>
-                        <button class="text-primary text-[10px] font-bold uppercase hover:underline" id="clear-logs-btn">Clear Logs</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -311,6 +289,23 @@
             <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png,.webp,.bmp,.tiff,.mp4,.avi,.mov,.mkv,.wmv">
         </div>
 
+        <!-- Sample Images -->
+        {% if samples %}
+        <div class="max-w-6xl mx-auto" id="samples-section">
+            <h3 class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3">Sample Data</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {% for sample in samples %}
+                <button class="sample-btn relative rounded-lg overflow-hidden border border-white/5 hover:border-primary/50 transition-all group aspect-video bg-slate-900" data-filename="{{ sample }}">
+                    <img src="/public/{{ sample }}" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" alt="{{ sample }}">
+                    <div class="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
+                        <p class="text-[9px] text-white/70 font-mono truncate">{{ sample }}</p>
+                    </div>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Preview Area (shown after file selection) -->
         <div class="max-w-6xl mx-auto" id="preview-section" style="display: none;">
             <div class="bg-black/40 border border-primary/20 rounded-xl overflow-hidden shadow-2xl relative">
@@ -343,16 +338,18 @@ const logBody = document.getElementById('log-body');
 const logCount = document.getElementById('log-count');
 const errorSection = document.getElementById('error-section');
 const errorText = document.getElementById('error-text');
-const clearLogsBtn = document.getElementById('clear-logs-btn');
 const uploadTitle = document.getElementById('upload-title');
 const uploadDesc = document.getElementById('upload-desc');
+const bboxToggle = document.getElementById('bbox-toggle');
+const bboxThumb = document.getElementById('bbox-thumb');
 
-// Step elements
 const stepUpload = document.getElementById('step-upload');
 const stepAnalysis = document.getElementById('step-analysis');
 const stepResults = document.getElementById('step-results');
 
 let selectedFile = null;
+let bboxEnabled = true;
+let lastResultData = null;
 
 const VIDEO_EXTS = ['mp4', 'avi', 'mov', 'mkv', 'wmv'];
 
@@ -365,13 +362,11 @@ function isVideo(name) {
 }
 
 function setStep(step) {
-    // Reset all
     [stepUpload, stepAnalysis, stepResults].forEach(el => {
         el.classList.add('opacity-50');
         el.querySelector('div').className = 'w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700';
         el.querySelector('span:last-child').className = 'text-sm font-medium text-slate-400';
     });
-    // Activate up to step
     const steps = [stepUpload, stepAnalysis, stepResults];
     for (let i = 0; i <= step; i++) {
         steps[i].classList.remove('opacity-50');
@@ -386,6 +381,53 @@ function setStep(step) {
         }
     }
 }
+
+function updateToggleVisual() {
+    if (bboxEnabled) {
+        bboxToggle.className = 'relative w-10 h-5 rounded-full toggle-track bg-primary/80 flex items-center px-0.5 cursor-pointer';
+        bboxThumb.className = 'w-4 h-4 bg-white rounded-full shadow toggle-thumb transform translate-x-5';
+    } else {
+        bboxToggle.className = 'relative w-10 h-5 rounded-full toggle-track bg-slate-600 flex items-center px-0.5 cursor-pointer';
+        bboxThumb.className = 'w-4 h-4 bg-white rounded-full shadow toggle-thumb transform translate-x-0';
+    }
+}
+
+function renderMedia(data) {
+    resultMediaWrap.innerHTML = '';
+    const url = bboxEnabled ? data.result_url : data.clean_url;
+    if (url) {
+        if (data.is_video) {
+            const video = document.createElement('video');
+            video.src = url;
+            video.controls = true;
+            video.className = 'w-full h-full object-contain';
+            resultMediaWrap.appendChild(video);
+        } else {
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'w-full h-full object-cover opacity-80';
+            resultMediaWrap.appendChild(img);
+        }
+    }
+}
+
+// BBox toggle
+bboxToggle.addEventListener('click', () => {
+    bboxEnabled = !bboxEnabled;
+    updateToggleVisual();
+    if (lastResultData) renderMedia(lastResultData);
+});
+
+// Sample image selection
+document.querySelectorAll('.sample-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const filename = btn.dataset.filename;
+        const resp = await fetch('/public/' + encodeURIComponent(filename));
+        const blob = await resp.blob();
+        const file = new File([blob], filename, { type: blob.type });
+        handleFile(file);
+    });
+});
 
 // File selection
 browseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
@@ -425,15 +467,11 @@ function handleFile(file) {
         previewContainer.appendChild(img);
     }
 
-    // Show preview, enable scan
     previewSection.style.display = 'block';
     scanBtn.disabled = false;
-
-    // Update upload area to "change file" mode
     uploadTitle.textContent = 'Change Mission Source';
     uploadDesc.textContent = 'Drop a different file or click to browse again.';
 
-    // Hide previous results
     viewerSection.style.display = 'none';
     statsSection.style.display = 'none';
     logsSection.style.display = 'none';
@@ -467,6 +505,7 @@ scanBtn.addEventListener('click', async () => {
 
         if (!resp.ok) throw new Error(data.error || 'Inference failed');
 
+        lastResultData = data;
         scanningSection.style.display = 'none';
         displayResults(data);
         setStep(2);
@@ -482,32 +521,16 @@ scanBtn.addEventListener('click', async () => {
 });
 
 function displayResults(data) {
-    // Result media
-    resultMediaWrap.innerHTML = '';
-    if (data.result_url) {
-        if (data.is_video) {
-            const video = document.createElement('video');
-            video.src = data.result_url;
-            video.controls = true;
-            video.className = 'w-full h-full object-contain';
-            resultMediaWrap.appendChild(video);
-        } else {
-            const img = document.createElement('img');
-            img.src = data.result_url;
-            img.className = 'w-full h-full object-cover opacity-80';
-            resultMediaWrap.appendChild(img);
-        }
-    }
+    renderMedia(data);
     viewerSection.style.display = 'block';
 
-    // Stats
     const dets = data.detections;
     const classes = [...new Set(dets.map(d => d.class))];
     const avgConf = dets.length ? (dets.reduce((s, d) => s + d.confidence, 0) / dets.length * 100) : 0;
 
     document.getElementById('stat-total').textContent = String(dets.length).padStart(2, '0');
     document.getElementById('stat-classes').textContent = String(classes.length).padStart(2, '0');
-    document.getElementById('stat-classes-list').textContent = classes.length ? classes.join(', ') : '—';
+    document.getElementById('stat-classes-list').textContent = classes.length ? classes.join(', ') : '\u2014';
     document.getElementById('stat-confidence').textContent = avgConf.toFixed(1) + '%';
 
     const confNote = document.getElementById('stat-confidence-note');
@@ -522,7 +545,6 @@ function displayResults(data) {
     }
     statsSection.style.display = 'grid';
 
-    // Detection logs
     logBody.innerHTML = '';
     dets.forEach((det, i) => {
         const pct = Math.round(det.confidence * 100);
@@ -547,34 +569,15 @@ function displayResults(data) {
     logsSection.style.display = 'block';
 }
 
-// Clear logs
-clearLogsBtn.addEventListener('click', () => {
-    logsSection.style.display = 'none';
-    viewerSection.style.display = 'none';
-    statsSection.style.display = 'none';
-    previewSection.style.display = 'none';
-    uploadTitle.textContent = 'Ready for Mission';
-    uploadDesc.textContent = 'Drag and drop drone footage or raw image sets here to begin high-speed RF-DETR analysis. Supports JPG, PNG, WEBP, MP4, AVI, MOV.';
-    selectedFile = null;
-    fileInput.value = '';
-    scanBtn.disabled = true;
-    exportBtn.disabled = true;
-    setStep(0);
-});
-
-// Export report (download detections as JSON)
+// Export report
 exportBtn.addEventListener('click', () => {
-    const rows = logBody.querySelectorAll('tr');
-    const report = [];
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        report.push({
-            id: cells[0].textContent.trim(),
-            class: cells[1].textContent.trim(),
-            confidence: cells[2].textContent.trim(),
-            bbox: cells[3].textContent.trim(),
-        });
-    });
+    if (!lastResultData) return;
+    const report = lastResultData.detections.map((det, i) => ({
+        id: i + 1,
+        class: det.class,
+        confidence: det.confidence,
+        bbox: det.bbox,
+    }));
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

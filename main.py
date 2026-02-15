@@ -24,6 +24,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+app.mount("/public", StaticFiles(directory=str(BASE_DIR / "public")), name="public")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
@@ -101,7 +102,7 @@ def annotate_image(image: np.ndarray, detections: list) -> np.ndarray:
     return annotated
 
 
-def run_image_inference(image_path: str, result_path: str) -> list:
+def run_image_inference(image_path: str, result_path: str, clean_path: str) -> list:
     """Run inference on a single image via Roboflow API."""
     image = cv2.imread(image_path)
     h, w = image.shape[:2]
@@ -114,11 +115,12 @@ def run_image_inference(image_path: str, result_path: str) -> list:
 
     annotated = annotate_image(image, detections)
     cv2.imwrite(result_path, annotated)
+    cv2.imwrite(clean_path, image)
 
     return detections
 
 
-def run_video_inference(video_path: str, result_path: str) -> list:
+def run_video_inference(video_path: str, result_path: str, clean_path: str) -> list:
     """Run inference on each frame of a video via Roboflow API."""
     cap = cv2.VideoCapture(video_path)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -126,6 +128,7 @@ def run_video_inference(video_path: str, result_path: str) -> list:
     fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter(result_path, fourcc, fps, (width, height))
+    out_clean = cv2.VideoWriter(clean_path, fourcc, fps, (width, height))
 
     all_detections = []
 
@@ -141,15 +144,23 @@ def run_video_inference(video_path: str, result_path: str) -> list:
 
         annotated = annotate_image(frame, detections)
         out.write(annotated)
+        out_clean.write(frame)
 
     cap.release()
     out.release()
+    out_clean.release()
     return all_detections
 
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    public_dir = BASE_DIR / "public"
+    samples = []
+    if public_dir.exists():
+        for f in sorted(public_dir.iterdir()):
+            if f.suffix.lower() in IMAGE_EXTENSIONS | VIDEO_EXTENSIONS:
+                samples.append(f.name)
+    return templates.TemplateResponse("index.html", {"request": request, "samples": samples})
 
 
 @app.post("/predict")
@@ -170,18 +181,22 @@ async def predict(file: UploadFile = File(...)):
     is_video = suffix in VIDEO_EXTENSIONS
     result_ext = ".mp4" if is_video else suffix
     result_filename = f"{unique_id}_result{result_ext}"
+    clean_filename = f"{unique_id}_clean{result_ext}"
     result_path = RESULTS_DIR / result_filename
+    clean_path = RESULTS_DIR / clean_filename
 
     try:
         if is_video:
-            detections = run_video_inference(str(upload_path), str(result_path))
+            detections = run_video_inference(str(upload_path), str(result_path), str(clean_path))
         else:
-            detections = run_image_inference(str(upload_path), str(result_path))
+            detections = run_image_inference(str(upload_path), str(result_path), str(clean_path))
 
         result_url = f"/static/results/{result_filename}"
+        clean_url = f"/static/results/{clean_filename}"
 
         return JSONResponse(content={
             "result_url": result_url,
+            "clean_url": clean_url,
             "detections": detections,
             "is_video": is_video,
             "total_detections": len(detections),
