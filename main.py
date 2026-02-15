@@ -85,7 +85,7 @@ def parse_predictions(api_result: dict, scale: float = 1.0):
         x2 = x_center + w / 2
         y2 = y_center + h / 2
         detections.append({
-            "class": pred["class"],
+            "class": "person",
             "confidence": round(pred["confidence"], 3),
             "bbox": [round(x1, 1), round(y1, 1), round(x2, 1), round(y2, 1)],
         })
