@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aerial Rescue AI | Mission Command</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#13ec6d",
+                    "background-light": "#f6f8f7",
+                    "background-dark": "#102218",
+                },
+                fontFamily: {
+                    "display": ["Inter", "sans-serif"]
+                },
+                borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+            },
+        },
+    }
+</script>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .scanline {
+        background: linear-gradient(rgba(19, 236, 109, 0) 50%, rgba(19, 236, 109, 0.05) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0), rgba(0, 255, 0, 0), rgba(0, 0, 255, 0));
+        z-index: 10;
+        background-size: 100% 2px, 3px 100%;
+        pointer-events: none;
+    }
+    .glow-primary {
+        box-shadow: 0 0 15px rgba(19, 236, 109, 0.3);
+    }
+    .coord-font {
+        font-family: 'Courier New', Courier, monospace;
+    }
+    @keyframes scan-sweep {
+        0% { top: 0; opacity: 0; }
+        10% { opacity: 0.6; }
+        90% { opacity: 0.6; }
+        100% { top: 100%; opacity: 0; }
+    }
+    .scan-sweep-line {
+        animation: scan-sweep 2s ease-in-out infinite;
+    }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex">
+
+<!-- Sidebar -->
+<aside class="w-72 bg-slate-900 dark:bg-[#0b1610] border-r border-primary/10 flex flex-col h-screen sticky top-0">
+    <div class="p-6 border-b border-white/5">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+                <span class="material-symbols-outlined text-[#0b1610] font-bold">air</span>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-white">AERIAL RESCUE</h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+            </span>
+            <p class="text-primary text-[10px] uppercase tracking-widest font-bold">System Online</p>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 space-y-6">
+        <!-- Model Metrics -->
+        <section>
+            <h3 class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 px-2">Model Metrics</h3>
+            <div class="bg-white/5 rounded-lg p-3 space-y-3 border border-white/5">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-slate-400">Architecture</span>
+                    <span class="text-xs font-mono text-white">RF-DETR Small</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-slate-400">mAP @ .50</span>
+                    <span class="text-xs font-mono text-primary">92.3%</span>
+                </div>
+                <div class="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+                    <div class="bg-primary h-full w-[92.3%]"></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-slate-400">Precision</span>
+                    <span class="text-xs font-mono text-white">89.7%</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-slate-400">Recall</span>
+                    <span class="text-xs font-mono text-white">90.0%</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <nav class="space-y-1">
+            <a class="flex items-center gap-3 px-3 py-2 text-primary bg-primary/10 rounded-lg group" href="#">
+                <span class="material-symbols-outlined text-xl">dashboard</span>
+                <span class="text-sm font-medium">Mission Command</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
+                <span class="material-symbols-outlined text-xl">history</span>
+                <span class="text-sm font-medium">Session History</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
+                <span class="material-symbols-outlined text-xl">settings</span>
+                <span class="text-sm font-medium">System Config</span>
+            </a>
+        </nav>
+
+        <!-- Telemetry -->
+        <section>
+            <h3 class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 px-2">Live Telemetry</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-white/5 p-2 rounded border border-white/5">
+                    <p class="text-[10px] text-slate-500 uppercase">Signal</p>
+                    <p class="text-sm font-mono text-white">98%</p>
+                </div>
+                <div class="bg-white/5 p-2 rounded border border-white/5">
+                    <p class="text-[10px] text-slate-500 uppercase">Battery</p>
+                    <p class="text-sm font-mono text-white">42m</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="p-4 border-t border-white/5">
+        <button class="w-full py-2 bg-slate-800 text-white rounded text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">support_agent</span>
+            Request Support
+        </button>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="flex-1 flex flex-col min-w-0">
+    <!-- Header / Progress Tracker -->
+    <header class="bg-white dark:bg-[#102218] border-b border-primary/10 p-4 sticky top-0 z-20">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-8">
+                <!-- Step 1: Upload -->
+                <div class="flex items-center gap-3" id="step-upload">
+                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center border border-primary shadow-[0_0_10px_rgba(19,236,109,0.5)]">
+                        <span class="text-[#0b1610] text-xs font-bold">01</span>
+                    </div>
+                    <span class="text-sm font-bold text-white">Upload</span>
+                </div>
+                <div class="h-[1px] w-8 bg-slate-700"></div>
+                <!-- Step 2: Analysis -->
+                <div class="flex items-center gap-3 opacity-50" id="step-analysis">
+                    <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                        <span class="text-slate-400 text-xs font-bold">02</span>
+                    </div>
+                    <span class="text-sm font-medium text-slate-400">Analysis</span>
+                </div>
+                <div class="h-[1px] w-8 bg-slate-700"></div>
+                <!-- Step 3: Target ID -->
+                <div class="flex items-center gap-3 opacity-50" id="step-results">
+                    <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                        <span class="text-slate-400 text-xs font-bold">03</span>
+                    </div>
+                    <span class="text-sm font-medium text-slate-400">Target ID</span>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button id="scan-btn" disabled class="px-4 py-2 bg-primary text-slate-900 text-sm font-bold rounded-lg hover:brightness-110 transition-all flex items-center gap-2 glow-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+                    <span class="material-symbols-outlined text-sm">play_arrow</span>
+                    INITIATE SCAN
+                </button>
+                <button id="export-btn" disabled class="px-4 py-2 bg-white/5 border border-white/10 text-white text-sm font-medium rounded-lg hover:bg-white/10 transition-all flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed">
+                    <span class="material-symbols-outlined text-sm">file_download</span>
+                    EXPORT REPORT
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="p-6 overflow-y-auto flex-1 space-y-6">
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto" id="stats-section" style="display: none;">
+            <div class="bg-white/5 border border-white/5 rounded-xl p-5 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span class="material-symbols-outlined text-5xl">person_search</span>
+                </div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Detections</p>
+                <p class="text-4xl font-bold text-primary font-mono tracking-tighter" id="stat-total">00</p>
+                <p class="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[10px] text-primary">check_circle</span>
+                    Verified by RF-DETR
+                </p>
+            </div>
+            <div class="bg-white/5 border border-white/5 rounded-xl p-5 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span class="material-symbols-outlined text-5xl">category</span>
+                </div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Unique Classes</p>
+                <p class="text-4xl font-bold text-white font-mono tracking-tighter" id="stat-classes">00</p>
+                <p class="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[10px]">explore</span>
+                    <span id="stat-classes-list">—</span>
+                </p>
+            </div>
+            <div class="bg-white/5 border border-white/5 rounded-xl p-5 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span class="material-symbols-outlined text-5xl">analytics</span>
+                </div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Avg Confidence</p>
+                <p class="text-4xl font-bold text-white font-mono tracking-tighter" id="stat-confidence">0.0%</p>
+                <p class="text-[10px] text-slate-400 mt-2 flex items-center gap-1" id="stat-confidence-note">
+                    <span class="material-symbols-outlined text-[10px] text-primary">check_circle</span>
+                    Awaiting scan
+                </p>
+            </div>
+        </div>
+
+        <!-- Detection Viewer Section (hidden until results) -->
+        <div class="max-w-6xl mx-auto" id="viewer-section" style="display: none;">
+            <div class="bg-black/40 border border-white/5 rounded-xl overflow-hidden shadow-2xl relative">
+                <div class="absolute top-4 left-4 z-20 flex gap-2" id="viewer-badges">
+                    <span class="bg-primary/90 text-[#0b1610] text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-tighter">SCAN_COMPLETE</span>
+                </div>
+                <div class="relative aspect-video w-full bg-slate-900 group" id="viewer-container">
+                    <div class="scanline absolute inset-0"></div>
+                    <div class="absolute inset-0 z-0" id="result-media-wrap"></div>
+                    <!-- HUD corners -->
+                    <svg class="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 1000 562">
+                        <path d="M20 20 L60 20 M20 20 L20 60" opacity="0.3" stroke="white" stroke-width="1"></path>
+                        <path d="M980 20 L940 20 M980 20 L980 60" opacity="0.3" stroke="white" stroke-width="1"></path>
+                        <path d="M20 542 L60 542 M20 542 L20 502" opacity="0.3" stroke="white" stroke-width="1"></path>
+                        <path d="M980 542 L940 542 M980 542 L980 502" opacity="0.3" stroke="white" stroke-width="1"></path>
+                        <circle cx="500" cy="281" fill="none" opacity="0.1" r="40" stroke="white" stroke-width="0.5"></circle>
+                        <line opacity="0.2" stroke="white" stroke-width="0.5" x1="480" x2="520" y1="281" y2="281"></line>
+                        <line opacity="0.2" stroke="white" stroke-width="0.5" x1="500" x2="500" y1="261" y2="301"></line>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scanning Indicator -->
+        <div class="max-w-6xl mx-auto" id="scanning-section" style="display: none;">
+            <div class="bg-black/40 border border-primary/20 rounded-xl overflow-hidden shadow-2xl relative">
+                <div class="relative aspect-video w-full bg-slate-900 flex flex-col items-center justify-center">
+                    <div class="scanline absolute inset-0"></div>
+                    <div class="absolute inset-0 overflow-hidden">
+                        <div class="scan-sweep-line absolute left-0 w-full h-[2px] bg-primary/60 shadow-[0_0_20px_rgba(19,236,109,0.4)]"></div>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center gap-4">
+                        <div class="w-16 h-16 border-2 border-primary/40 border-t-primary rounded-full animate-spin"></div>
+                        <p class="text-primary text-sm font-bold uppercase tracking-widest">Scanning in Progress</p>
+                        <p class="text-slate-500 text-xs font-mono">Running RF-DETR inference...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detection Logs Table (hidden until results) -->
+        <div class="max-w-6xl mx-auto" id="logs-section" style="display: none;">
+            <div class="bg-white/5 border border-white/5 rounded-xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-sm font-bold uppercase tracking-widest text-white">Detection Logs</h3>
+                    <div class="flex items-center gap-4">
+                        <span class="text-[10px] text-slate-500 font-medium" id="log-count">SHOWING 0 OF 0 TARGETS</span>
+                        <div class="h-4 w-[1px] bg-white/10"></div>
+                        <button class="text-primary text-[10px] font-bold uppercase hover:underline" id="clear-logs-btn">Clear Logs</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-white/[0.02] text-slate-400 uppercase font-bold tracking-tighter">
+                            <tr>
+                                <th class="px-6 py-3">#</th>
+                                <th class="px-6 py-3">Classification</th>
+                                <th class="px-6 py-3">Confidence</th>
+                                <th class="px-6 py-3">Bounding Box</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5 font-mono" id="log-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="max-w-6xl mx-auto" id="error-section" style="display: none;">
+            <div class="bg-red-900/20 border border-red-500/30 rounded-xl p-6 flex items-center gap-4">
+                <span class="material-symbols-outlined text-red-400 text-2xl">error</span>
+                <div>
+                    <p class="text-red-400 font-bold text-sm">SCAN FAILED</p>
+                    <p class="text-red-300/70 text-xs mt-1" id="error-text"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Area -->
+        <div class="max-w-6xl mx-auto" id="upload-section">
+            <div id="drop-zone" class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-primary/30 rounded-2xl bg-primary/5 group cursor-pointer hover:bg-primary/10 transition-all">
+                <div class="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+                </div>
+                <h2 class="text-xl font-bold text-white mb-2" id="upload-title">Ready for Mission</h2>
+                <p class="text-slate-400 text-sm max-w-md text-center" id="upload-desc">Drag and drop drone footage or raw image sets here to begin high-speed RF-DETR analysis. Supports JPG, PNG, WEBP, MP4, AVI, MOV.</p>
+                <button id="browse-btn" class="mt-6 px-8 py-3 bg-white/5 border border-white/10 text-white font-bold rounded-lg hover:bg-primary hover:text-[#0b1610] hover:border-primary transition-all">
+                    SELECT MISSION SOURCE
+                </button>
+            </div>
+            <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png,.webp,.bmp,.tiff,.mp4,.avi,.mov,.mkv,.wmv">
+        </div>
+
+        <!-- Preview Area (shown after file selection) -->
+        <div class="max-w-6xl mx-auto" id="preview-section" style="display: none;">
+            <div class="bg-black/40 border border-primary/20 rounded-xl overflow-hidden shadow-2xl relative">
+                <div class="absolute top-4 left-4 z-20 flex gap-2">
+                    <span class="bg-yellow-500/90 text-black text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-tighter">AWAITING_SCAN</span>
+                    <span class="bg-black/60 text-white text-[10px] font-mono px-2 py-1 rounded-sm border border-white/20" id="preview-filename"></span>
+                </div>
+                <div class="relative aspect-video w-full bg-slate-900 flex items-center justify-center" id="preview-container"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const browseBtn = document.getElementById('browse-btn');
+const scanBtn = document.getElementById('scan-btn');
+const exportBtn = document.getElementById('export-btn');
+const uploadSection = document.getElementById('upload-section');
+const previewSection = document.getElementById('preview-section');
+const previewContainer = document.getElementById('preview-container');
+const previewFilename = document.getElementById('preview-filename');
+const scanningSection = document.getElementById('scanning-section');
+const viewerSection = document.getElementById('viewer-section');
+const resultMediaWrap = document.getElementById('result-media-wrap');
+const statsSection = document.getElementById('stats-section');
+const logsSection = document.getElementById('logs-section');
+const logBody = document.getElementById('log-body');
+const logCount = document.getElementById('log-count');
+const errorSection = document.getElementById('error-section');
+const errorText = document.getElementById('error-text');
+const clearLogsBtn = document.getElementById('clear-logs-btn');
+const uploadTitle = document.getElementById('upload-title');
+const uploadDesc = document.getElementById('upload-desc');
+
+// Step elements
+const stepUpload = document.getElementById('step-upload');
+const stepAnalysis = document.getElementById('step-analysis');
+const stepResults = document.getElementById('step-results');
+
+let selectedFile = null;
+
+const VIDEO_EXTS = ['mp4', 'avi', 'mov', 'mkv', 'wmv'];
+
+function getExt(name) {
+    return name.split('.').pop().toLowerCase();
+}
+
+function isVideo(name) {
+    return VIDEO_EXTS.includes(getExt(name));
+}
+
+function setStep(step) {
+    // Reset all
+    [stepUpload, stepAnalysis, stepResults].forEach(el => {
+        el.classList.add('opacity-50');
+        el.querySelector('div').className = 'w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700';
+        el.querySelector('span:last-child').className = 'text-sm font-medium text-slate-400';
+    });
+    // Activate up to step
+    const steps = [stepUpload, stepAnalysis, stepResults];
+    for (let i = 0; i <= step; i++) {
+        steps[i].classList.remove('opacity-50');
+        if (i === step) {
+            steps[i].querySelector('div').className = 'w-8 h-8 rounded-full bg-primary flex items-center justify-center border border-primary shadow-[0_0_10px_rgba(19,236,109,0.5)]';
+            steps[i].querySelector('div span').className = 'text-[#0b1610] text-xs font-bold';
+            steps[i].querySelector('span:last-child').className = 'text-sm font-bold text-white';
+        } else {
+            steps[i].querySelector('div').className = 'w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/40';
+            steps[i].querySelector('div span').className = 'text-primary text-xs font-bold';
+            steps[i].querySelector('span:last-child').className = 'text-sm font-medium text-slate-400';
+        }
+    }
+}
+
+// File selection
+browseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('bg-primary/20', 'border-primary');
+});
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('bg-primary/20', 'border-primary');
+});
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('bg-primary/20', 'border-primary');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFile(fileInput.files[0]);
+});
+
+function handleFile(file) {
+    selectedFile = file;
+    previewFilename.textContent = file.name;
+    previewContainer.innerHTML = '';
+
+    if (isVideo(file.name)) {
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(file);
+        video.controls = true;
+        video.className = 'w-full h-full object-contain';
+        previewContainer.appendChild(video);
+    } else {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.className = 'w-full h-full object-contain opacity-80';
+        previewContainer.appendChild(img);
+    }
+
+    // Show preview, enable scan
+    previewSection.style.display = 'block';
+    scanBtn.disabled = false;
+
+    // Update upload area to "change file" mode
+    uploadTitle.textContent = 'Change Mission Source';
+    uploadDesc.textContent = 'Drop a different file or click to browse again.';
+
+    // Hide previous results
+    viewerSection.style.display = 'none';
+    statsSection.style.display = 'none';
+    logsSection.style.display = 'none';
+    errorSection.style.display = 'none';
+    scanningSection.style.display = 'none';
+
+    setStep(0);
+}
+
+// Scan
+scanBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+
+    scanBtn.disabled = true;
+    exportBtn.disabled = true;
+    previewSection.style.display = 'none';
+    scanningSection.style.display = 'block';
+    viewerSection.style.display = 'none';
+    statsSection.style.display = 'none';
+    logsSection.style.display = 'none';
+    errorSection.style.display = 'none';
+
+    setStep(1);
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+        const resp = await fetch('/predict', { method: 'POST', body: formData });
+        const data = await resp.json();
+
+        if (!resp.ok) throw new Error(data.error || 'Inference failed');
+
+        scanningSection.style.display = 'none';
+        displayResults(data);
+        setStep(2);
+        exportBtn.disabled = false;
+    } catch (err) {
+        scanningSection.style.display = 'none';
+        errorText.textContent = err.message;
+        errorSection.style.display = 'block';
+        setStep(0);
+    } finally {
+        scanBtn.disabled = false;
+    }
+});
+
+function displayResults(data) {
+    // Result media
+    resultMediaWrap.innerHTML = '';
+    if (data.result_url) {
+        if (data.is_video) {
+            const video = document.createElement('video');
+            video.src = data.result_url;
+            video.controls = true;
+            video.className = 'w-full h-full object-contain';
+            resultMediaWrap.appendChild(video);
+        } else {
+            const img = document.createElement('img');
+            img.src = data.result_url;
+            img.className = 'w-full h-full object-cover opacity-80';
+            resultMediaWrap.appendChild(img);
+        }
+    }
+    viewerSection.style.display = 'block';
+
+    // Stats
+    const dets = data.detections;
+    const classes = [...new Set(dets.map(d => d.class))];
+    const avgConf = dets.length ? (dets.reduce((s, d) => s + d.confidence, 0) / dets.length * 100) : 0;
+
+    document.getElementById('stat-total').textContent = String(dets.length).padStart(2, '0');
+    document.getElementById('stat-classes').textContent = String(classes.length).padStart(2, '0');
+    document.getElementById('stat-classes-list').textContent = classes.length ? classes.join(', ') : '—';
+    document.getElementById('stat-confidence').textContent = avgConf.toFixed(1) + '%';
+
+    const confNote = document.getElementById('stat-confidence-note');
+    if (avgConf >= 80) {
+        confNote.innerHTML = '<span class="material-symbols-outlined text-[10px] text-primary">check_circle</span> High confidence scan';
+    } else if (avgConf >= 50) {
+        confNote.innerHTML = '<span class="material-symbols-outlined text-[10px] text-yellow-500">warning</span> Moderate confidence';
+    } else if (dets.length > 0) {
+        confNote.innerHTML = '<span class="material-symbols-outlined text-[10px] text-red-400">error</span> Low confidence — verify manually';
+    } else {
+        confNote.innerHTML = '<span class="material-symbols-outlined text-[10px] text-slate-500">info</span> No targets detected';
+    }
+    statsSection.style.display = 'grid';
+
+    // Detection logs
+    logBody.innerHTML = '';
+    dets.forEach((det, i) => {
+        const pct = Math.round(det.confidence * 100);
+        const cls = det.class.toUpperCase();
+        const isPersonClass = cls.includes('PERSON') || cls.includes('HUMAN') || cls.includes('BODY');
+        const badgeColor = isPersonClass
+            ? 'bg-primary/20 text-primary border-primary/30'
+            : 'bg-white/10 text-white border-white/20';
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-white/[0.02] transition-colors group';
+        row.innerHTML = `
+            <td class="px-6 py-4 text-slate-400">${String(i + 1).padStart(2, '0')}</td>
+            <td class="px-6 py-4">
+                <span class="${badgeColor} border px-2 py-0.5 rounded text-[10px]">${cls}</span>
+            </td>
+            <td class="px-6 py-4 text-white">${pct}%</td>
+            <td class="px-6 py-4 text-slate-400">${det.bbox.map(v => Math.round(v)).join(', ')}</td>
+        `;
+        logBody.appendChild(row);
+    });
+    logCount.textContent = `SHOWING ${dets.length} OF ${dets.length} TARGETS`;
+    logsSection.style.display = 'block';
+}
+
+// Clear logs
+clearLogsBtn.addEventListener('click', () => {
+    logsSection.style.display = 'none';
+    viewerSection.style.display = 'none';
+    statsSection.style.display = 'none';
+    previewSection.style.display = 'none';
+    uploadTitle.textContent = 'Ready for Mission';
+    uploadDesc.textContent = 'Drag and drop drone footage or raw image sets here to begin high-speed RF-DETR analysis. Supports JPG, PNG, WEBP, MP4, AVI, MOV.';
+    selectedFile = null;
+    fileInput.value = '';
+    scanBtn.disabled = true;
+    exportBtn.disabled = true;
+    setStep(0);
+});
+
+// Export report (download detections as JSON)
+exportBtn.addEventListener('click', () => {
+    const rows = logBody.querySelectorAll('tr');
+    const report = [];
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        report.push({
+            id: cells[0].textContent.trim(),
+            class: cells[1].textContent.trim(),
+            confidence: cells[2].textContent.trim(),
+            bbox: cells[3].textContent.trim(),
+        });
+    });
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aerial-rescue-report.json';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// Init
+setStep(0);
+</script>
+</body>
+</html>

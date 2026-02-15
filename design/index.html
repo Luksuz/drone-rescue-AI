@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aerial Rescue AI | Mission Command</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec6d",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#102218",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .scanline {
+            background: linear-gradient(rgba(19, 236, 109, 0) 50%, rgba(19, 236, 109, 0.05) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0), rgba(0, 255, 0, 0), rgba(0, 0, 255, 0));
+            z-index: 10;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+        .glow-primary {
+            box-shadow: 0 0 15px rgba(19, 236, 109, 0.3);
+        }
+        .coord-font {
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex">
+<!-- Sidebar -->
+<aside class="w-72 bg-slate-900 dark:bg-[#0b1610] border-r border-primary/10 flex flex-col h-screen sticky top-0">
+<div class="p-6 border-b border-white/5">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[#0b1610] font-bold">air</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-white">AERIAL RESCUE</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+<p class="text-primary text-[10px] uppercase tracking-widest font-bold">System Online</p>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- Model Metrics -->
+<section>
+<h3 class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 px-2">Model Metrics</h3>
+<div class="bg-white/5 rounded-lg p-3 space-y-3 border border-white/5">
+<div class="flex justify-between items-center">
+<span class="text-xs text-slate-400">Architecture</span>
+<span class="text-xs font-mono text-white">RF-DETR Nano</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-slate-400">mAP @ .50</span>
+<span class="text-xs font-mono text-primary">67.3%</span>
+</div>
+<div class="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[67.3%]"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-slate-400">Latency</span>
+<span class="text-xs font-mono text-white">14ms</span>
+</div>
+</div>
+</section>
+<!-- Navigation -->
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-primary bg-primary/10 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="text-sm font-medium">Mission Command</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">history</span>
+<span class="text-sm font-medium">Session History</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span class="text-sm font-medium">System Config</span>
+</a>
+</nav>
+<!-- Telemetry -->
+<section>
+<h3 class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 px-2">Live Telemetry</h3>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-white/5 p-2 rounded border border-white/5">
+<p class="text-[10px] text-slate-500 uppercase">Signal</p>
+<p class="text-sm font-mono text-white">98%</p>
+</div>
+<div class="bg-white/5 p-2 rounded border border-white/5">
+<p class="text-[10px] text-slate-500 uppercase">Battery</p>
+<p class="text-sm font-mono text-white">42m</p>
+</div>
+</div>
+</section>
+</div>
+<div class="p-4 border-t border-white/5">
+<button class="w-full py-2 bg-slate-800 text-white rounded text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">support_agent</span>
+                Request Support
+            </button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- Header / Progress Tracker -->
+<header class="bg-white dark:bg-[#102218] border-b border-primary/10 p-4 sticky top-0 z-20">
+<div class="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/40">
+<span class="text-primary text-xs font-bold">01</span>
+</div>
+<span class="text-sm font-medium text-slate-400">Upload</span>
+</div>
+<div class="h-[1px] w-8 bg-slate-700"></div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center border border-primary shadow-[0_0_10px_rgba(19,236,109,0.5)]">
+<span class="text-[#0b1610] text-xs font-bold">02</span>
+</div>
+<span class="text-sm font-bold text-white">Analysis</span>
+</div>
+<div class="h-[1px] w-8 bg-slate-700"></div>
+<div class="flex items-center gap-3 opacity-50">
+<div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+<span class="text-slate-400 text-xs font-bold">03</span>
+</div>
+<span class="text-sm font-medium text-slate-400">Target ID</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-primary text-slate-900 text-sm font-bold rounded-lg hover:brightness-110 transition-all flex items-center gap-2 glow-primary">
+<span class="material-symbols-outlined text-sm">play_arrow</span>
+                        INITIATE SCAN
+                    </button>
+<button class="px-4 py-2 bg-white/5 border border-white/10 text-white text-sm font-medium rounded-lg hover:bg-white/10 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">file_download</span>
+                        EXPORT REPORT
+                    </button>
+</div>
+</div>
+</header>
+<div class="p-6 overflow-y-auto flex-1 space-y-6">
+<!-- Summary Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+<div class="bg-white/5 border border-white/5 rounded-xl p-5 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-5xl">person_search</span>
+</div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Detections</p>
+<p class="text-4xl font-bold text-primary font-mono tracking-tighter">04</p>
+<p class="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px] text-primary">check_circle</span>
+                        Verified by RF-DETR
+                    </p>
+</div>
+<div class="bg-white/5 border border-white/5 rounded-xl p-5 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-5xl">location_on</span>
+</div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Target ROI</p>
+<p class="text-xl font-bold text-white font-mono mt-3 uppercase tracking-tight">34.0522° N, 118.2437° W</p>
+<p class="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]">explore</span>
+                        Sector: Alpha-9
+                    </p>
+</div>
+<div class="bg-white/5 border border-white/5 rounded-xl p-5 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-5xl">analytics</span>
+</div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Avg Confidence</p>
+<p class="text-4xl font-bold text-white font-mono tracking-tighter">89.4%</p>
+<p class="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px] text-yellow-500">warning</span>
+                        High Variance in Sector B
+                    </p>
+</div>
+</div>
+<!-- Detection Viewer Section -->
+<div class="max-w-6xl mx-auto">
+<div class="bg-black/40 border border-white/5 rounded-xl overflow-hidden shadow-2xl relative">
+<!-- Overlay Controls -->
+<div class="absolute top-4 left-4 z-20 flex gap-2">
+<span class="bg-primary/90 text-[#0b1610] text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-tighter">LIVE_SCAN_ACTIVE</span>
+<span class="bg-black/60 text-white text-[10px] font-mono px-2 py-1 rounded-sm border border-white/20">ALT: 124m</span>
+</div>
+<!-- Detection Viewport -->
+<div class="relative aspect-video w-full bg-slate-900 group">
+<div class="scanline absolute inset-0"></div>
+<!-- Image with bounding boxes -->
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-80" data-alt="Aerial view of a mountain landscape for drone detection" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjc8GSzPAfur4rAfG1MxoZvvdXmcSPH2EAgluMy4G2g9J2GOABrp4Ty4BnjBzHZGTwjXkCHPfHtVW0Cj8ZYF-XNuifzUWZMsXwCOpsAA9lDeH2qYwPSbZB8dK5_Rs4cWF2p1NW_XKo0NP4M8a-Ng9eIaukWu72A9fNm5hSQc1zMte-lu9MLgoHocwWt_kxfjZqmIqxGcbnT8Gi9VndpL-1uCkRbqPpjOyyziosTBd1zWPBC2jWD2oohZCv0pjg7dpTpDeE9w-AmNY"/>
+</div>
+<!-- SVG Bounding Boxes -->
+<svg class="absolute inset-0 w-full h-full z-10 pointer-events-none" viewbox="0 0 1000 562">
+<!-- Detection 1 -->
+<g>
+<rect class="animate-pulse" fill="none" height="90" stroke="#13ec6d" stroke-width="2" width="60" x="420" y="180"></rect>
+<rect fill="#13ec6d" height="20" width="85" x="420" y="160"></rect>
+<text fill="#0b1610" font-family="monospace" font-size="12" font-weight="bold" x="425" y="174">PERSON 94%</text>
+<line stroke="#13ec6d" stroke-dasharray="2,2" stroke-width="1" x1="450" x2="450" y1="180" y2="150"></line>
+</g>
+<!-- Detection 2 -->
+<g>
+<rect fill="none" height="80" stroke="#13ec6d" stroke-width="2" width="55" x="710" y="320"></rect>
+<rect fill="#13ec6d" height="20" width="85" x="710" y="300"></rect>
+<text fill="#0b1610" font-family="monospace" font-size="12" font-weight="bold" x="715" y="314">PERSON 88%</text>
+</g>
+<!-- HUD Decorations -->
+<path d="M20 20 L60 20 M20 20 L20 60" opacity="0.3" stroke="white" stroke-width="1"></path>
+<path d="M980 20 L940 20 M980 20 L980 60" opacity="0.3" stroke="white" stroke-width="1"></path>
+<path d="M20 542 L60 542 M20 542 L20 502" opacity="0.3" stroke="white" stroke-width="1"></path>
+<path d="M980 542 L940 542 M980 542 L980 502" opacity="0.3" stroke="white" stroke-width="1"></path>
+<circle cx="500" cy="281" fill="none" opacity="0.1" r="40" stroke="white" stroke-width="0.5"></circle>
+<line opacity="0.2" stroke="white" stroke-width="0.5" x1="480" x2="520" y1="281" y2="281"></line>
+<line opacity="0.2" stroke="white" stroke-width="0.5" x1="500" x2="500" y1="261" y2="301"></line>
+</svg>
+<!-- HUD Telemetry Overlay -->
+<div class="absolute bottom-6 left-6 z-20 text-white font-mono space-y-1">
+<p class="text-[10px] text-primary">34°03'07.9"N 118°14'37.3"W</p>
+<p class="text-[10px] text-white/60">GIMBAL: -45.0°</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Detection Logs Table -->
+<div class="max-w-6xl mx-auto bg-white/5 border border-white/5 rounded-xl overflow-hidden">
+<div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+<h3 class="text-sm font-bold uppercase tracking-widest text-white">Detection Logs</h3>
+<div class="flex items-center gap-4">
+<span class="text-[10px] text-slate-500 font-medium">SHOWING 4 OF 4 TARGETS</span>
+<div class="h-4 w-[1px] bg-white/10"></div>
+<button class="text-primary text-[10px] font-bold uppercase hover:underline">Clear Logs</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-xs">
+<thead class="bg-white/[0.02] text-slate-400 uppercase font-bold tracking-tighter">
+<tr>
+<th class="px-6 py-3">Timestamp</th>
+<th class="px-6 py-3">Classification</th>
+<th class="px-6 py-3">Confidence</th>
+<th class="px-6 py-3">Geo-Coordinates</th>
+<th class="px-6 py-3 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5 font-mono">
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-4 text-slate-400">14:22:04.12</td>
+<td class="px-6 py-4">
+<span class="bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded text-[10px]">PERSON</span>
+</td>
+<td class="px-6 py-4 text-white">94.2%</td>
+<td class="px-6 py-4 text-slate-400">34.0522, -118.2437</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary opacity-0 group-hover:opacity-100 transition-opacity">PIN POINT</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-4 text-slate-400">14:22:05.48</td>
+<td class="px-6 py-4">
+<span class="bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded text-[10px]">PERSON</span>
+</td>
+<td class="px-6 py-4 text-white">88.7%</td>
+<td class="px-6 py-4 text-slate-400">34.0523, -118.2438</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary opacity-0 group-hover:opacity-100 transition-opacity">PIN POINT</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-4 text-slate-400">14:22:08.91</td>
+<td class="px-6 py-4">
+<span class="bg-white/10 text-white border border-white/20 px-2 py-0.5 rounded text-[10px]">VEHICLE</span>
+</td>
+<td class="px-6 py-4 text-white">72.1%</td>
+<td class="px-6 py-4 text-slate-400">34.0530, -118.2441</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary opacity-0 group-hover:opacity-100 transition-opacity">PIN POINT</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Upload Area (Empty State Example) -->
+<div class="max-w-6xl mx-auto mt-12">
+<div class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-primary/30 rounded-2xl bg-primary/5 group cursor-pointer hover:bg-primary/10 transition-all">
+<div class="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+</div>
+<h2 class="text-xl font-bold text-white mb-2">Ready for Mission: AR-9924</h2>
+<p class="text-slate-400 text-sm max-w-md text-center">Drag and drop drone footage or raw image sets here to begin high-speed RF-DETR analysis. Supports RAW, MP4, and JPG metadata.</p>
+<button class="mt-6 px-8 py-3 bg-white/5 border border-white/10 text-white font-bold rounded-lg hover:bg-primary hover:text-[#0b1610] hover:border-primary transition-all">
+                        SELECT MISSION SOURCE
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</body></html>
